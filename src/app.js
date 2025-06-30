@@ -86,7 +86,7 @@ const getData = async () => {
     })
 
 
-    const time = `${timeHour}:${timeMin}`
+    const time = `${timeHour + 2}:${timeMin}`
 
 
     const dataCurs = await getCurs()
@@ -96,8 +96,8 @@ const getData = async () => {
     result.date = date
     result.day = day
     result.time = time
-    result.img = (timeHour >= 6 && timeHour < 18) ? `${process.env.URL}/img/sun.png` : `${process.env.URL}/img/moon.png`
-    result.bg = (timeHour >= 6 && timeHour < 18) ? `${process.env.URL}/img/light.png` : `${process.env.URL}/img/dark.png`
+    result.img = (timeHour+2 >= 6 && timeHour+2 < 18) ? `${process.env.URL}/img/sun.png` : `${process.env.URL}/img/moon.png`
+    result.bg = (timeHour+2 >= 6 && timeHour+2 < 18) ? `${process.env.URL}/img/light.png` : `${process.env.URL}/img/dark.png`
     result.rate = Math.floor(dataCurs.Valute.USD.Value)
     result.weather = Math.floor(data.main.temp_max)
 
