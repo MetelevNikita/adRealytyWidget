@@ -61,7 +61,6 @@ const getWeather = async () => {
         })
 
         const data = await responce.json()
-        console.log(data)
         return data
     } catch (error) {
         console.log(error)
@@ -98,7 +97,7 @@ const getData = async () => {
     result.time = time
     result.img = (timeHour+2 >= 6 && timeHour+2 < 18) ? `${process.env.URL}/img/sun.png` : `${process.env.URL}/img/moon.png`
     result.bg = (timeHour+2 >= 6 && timeHour+2 < 18) ? `${process.env.URL}/img/light.png` : `${process.env.URL}/img/dark.png`
-    result.rate = Math.floor(dataCurs.Valute.USD.Value)
+    result.rate = dataCurs.Valute.USD.Value.toFixed(2)
     result.weather = Math.floor(data.main.temp_max)
 
 
