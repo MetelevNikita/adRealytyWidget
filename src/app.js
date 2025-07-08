@@ -69,7 +69,10 @@ const getWeather = async () => {
 }
 
 
-const result = {}
+
+const result = {
+
+}
 
 const getData = async () => {
 
@@ -97,17 +100,37 @@ const getData = async () => {
     result.time = time
     result.img = (timeHour+2 >= 6 && timeHour+2 < 18) ? `${process.env.URL}/img/sun.png` : `${process.env.URL}/img/moon.png`
     result.bg = (timeHour+2 >= 6 && timeHour+2 < 18) ? `${process.env.URL}/img/light.png` : `${process.env.URL}/img/dark.png`
-    result.rate = dataCurs.Valute.USD.Value.toFixed(2)
+    result.rate = Number(dataCurs.Valute.USD.Value.toFixed(2))
     result.weather = Math.floor(data.main.temp_max)
+
+
+    return result
 
 
 }
 
 
 
+const firstRender = async () => {
+    const data = await getData()
+    console.log(data)
+}
+
+
+firstRender()
+
+
+
+
+
+
+
+
+
+
 setInterval(async () => {
-    await getData();  // обновляем данные
-    console.log("Data updated:", result);  // для логирования обновлений
+    const data = await getData();  // обновляем данные
+    console.log("Data updated:", data);  // для логирования обновлений
 }, 3600000); // 3600000 миллисекунд = 1 час
 
 
@@ -119,7 +142,7 @@ app.get('/', async (req, res) => {
 
 
 
-getData()
+
 
 
 
@@ -128,3 +151,6 @@ const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`)
 })
+
+
+
