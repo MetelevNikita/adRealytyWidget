@@ -21,7 +21,9 @@ app.use(express.static(path.join(__dirname, '../public')))
 
 // 
 
-dotnev.config()
+dotnev.config({
+    path: path.join(__dirname, '../.env')
+})
 
 // regions
 
