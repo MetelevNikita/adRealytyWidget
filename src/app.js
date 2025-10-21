@@ -23,10 +23,12 @@ app.use(express.static(path.join(__dirname, '../public')))
 
 dotnev.config()
 
+// regions
+
+const regions = require('../regions.json')
+
+
 // 
-
-
-
 
 
 
@@ -51,9 +53,9 @@ const getCurs = async () => {
     }
 }
 
-const getWeather = async () => {
+const getWeather = async (city) => {
     try {
-        const responce = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=Ufa&units=metric&appid=${process.env.TOKEN}`, {
+        const responce = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${process.env.TOKEN}`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -68,78 +70,170 @@ const getWeather = async () => {
 
 }
 
+const getInfo = (region) => {
+    try {
 
 
-const result = {
+    const date = new Date()
 
-}
+    const timeRegion = new Intl.DateTimeFormat('ru', {
+        timeZone: region,
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: false,
+    }).format(date)
 
-const getData = async () => {
 
-    const timeHour = new Date().getHours()
-    const timeMin = new Date().getMinutes()
-    const date = new Date().toLocaleDateString('ru', {
+    const dateRegion = new Intl.DateTimeFormat('ru', {
+        timeZone: region,
         year: 'numeric',
         month: 'long',
-        day: 'numeric'
-    })
-    const day = new Date().toLocaleDateString('ru', {
-        weekday: 'long'
-    })
+        day: 'numeric',
+        weekday: 'long',
+    }).format(date)
 
 
-    const time = `${timeHour + 2}:${timeMin}`
+    return {timeRegion, dateRegion}
 
-
-    const dataCurs = await getCurs()
-    const data = await getWeather()
-
-
-    result.date = date
-    result.day = day
-    result.time = time
-    result.img = (timeHour+2 >= 6 && timeHour+2 < 18) ? `${process.env.URL}/img/sun.png` : `${process.env.URL}/img/moon.png`
-    result.bg = (timeHour+2 >= 6 && timeHour+2 < 18) ? `${process.env.URL}/img/light.png` : `${process.env.URL}/img/dark.png`
-    result.rate = Number(dataCurs.Valute.USD.Value.toFixed(2))
-    result.weather = Math.floor(data.main.temp_max)
-
-
-    return result
-
-
+        
+    } catch (error) {
+        console.log(error)
+        throw new Error({
+            message: 'Error',
+            status: 500
+        })
+    }
 }
-
-
-
-const firstRender = async () => {
-    const data = await getData()
-    console.log(data)
-}
-
-
-firstRender()
-
-
-
-
-
-
-
-
-
-
-setInterval(async () => {
-    const data = await getData();  // обновляем данные
-    console.log("Data updated:", data);  // для логирования обновлений
-}, 3600000); // 3600000 миллисекунд = 1 час
-
 
 
 
 app.get('/', async (req, res) => {
-    res.json(result)
+    try {
+
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+        res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Max-Age', '86400')
+
+
+
+        const info = getInfo('Asia/Yekaterinburg')
+        const wetaher = await getWeather('ufa')
+        const curs = await getCurs()
+
+
+
+        const time = info.timeRegion.split(':')
+        console.log(time)
+
+
+        const currentIcon = (time[0] >= 6 && time[0] < 18) ? `${process.env.URL}/img/sun.png` : `${process.env.URL}/img/moon.png`
+
+        const currentBg = (time[0] >= 6 && time[0] < 18) ? `${process.env.URL}/img/light.png` : `${process.env.URL}/img/dark.png`
+
+
+        res.status(200).json({
+            time: info.timeRegion,
+            date: info.dateRegion,
+            wetaher: Math.floor(wetaher.main.temp),
+            img: currentIcon,
+            bg: currentBg,
+            curs: curs.Valute.USD.Value.toFixed(2)
+
+        })
+        
+    } catch (error) {
+        console.log(error)
+    }
 })
 
+
+
+
+app.get('/:region', async (req, res) => {
+    try {
+
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+        res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Max-Age', '86400')
+
+
+
+
+        const currentRegion = regions.data.find(region => region.name === req.params.region)
+        console.log(currentRegion)
+
+        if (!currentRegion) {
+            res.status(404).json({
+                message: 'Region not found',
+                status: 404
+            })
+        }
+
+        const info = getInfo(currentRegion.timeZone)
+        const wetaher = await getWeather(currentRegion.city)
+        const curs = await getCurs()
+
+
+
+        const time = info.timeRegion.split(':')
+        console.log(time)
+
+
+        const currentIcon = (time[0] >= 6 && time[0] < 18) ? `${process.env.URL}/img/sun.png` : `${process.env.URL}/img/moon.png`
+
+        const currentBg = (time[0] >= 6 && time[0] < 18) ? `${process.env.URL}/img/light.png` : `${process.env.URL}/img/dark.png`
+
+
+        res.status(200).json({
+            time: info.timeRegion,
+            date: info.dateRegion,
+            wetaher: Math.floor(wetaher.main.temp),
+            img: currentIcon,
+            bg: currentBg,
+            curs: curs.Valute.USD.Value.toFixed(2)
+
+        })
+        
+    } catch (error) {
+        res.status(500).json({
+            message: 'Error',
+            status: 500
+        })
+    }
+})
+
+
+
+app.get('/time/:region', async (req, res) => {
+    try {
+
+
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+        res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Max-Age', '86400')
+
+        const currentRegion = regions.data.find(region => region.name === req.params.region)
+        console.log(currentRegion)
+
+        const info = getInfo(currentRegion.timeZone)
+
+        res.status(200).json({
+            time: info.timeRegion,
+        })
+
+    } catch (error) {
+        res.status(500).json({
+            message: 'Error',
+            status: 500
+        })
+    }
+})
 
 
 

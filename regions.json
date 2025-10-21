@@ -1,0 +1,39 @@
+{
+  "data": [
+    {
+      "id": "1",
+      "name": "nn",
+      "timeZone": "Europe/Moscow",
+      "city": "Nizhny Novgorod",
+      "lat": "56327",
+      "lon": "44007"
+    },
+
+    {
+      "id": "2",
+      "name": "msk",
+      "timeZone": "Europe/Moscow",
+      "city": "Moscow",
+      "lat": "56327",
+      "lon": "44007"
+    },
+
+    {
+      "id": "3",
+      "name": "ufa",
+      "timeZone": "Asia/Yekaterinburg",
+      "city": "Ufa",
+      "lat": "56327",
+      "lon": "44007"
+    },
+
+    {
+      "id": "4",
+      "name": "oren",
+      "timeZone": "Asia/Yekaterinburg",
+      "city": "Orenburg",
+      "lat": "56327",
+      "lon": "44007"
+    }
+  ]
+}
