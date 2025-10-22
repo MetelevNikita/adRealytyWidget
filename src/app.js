@@ -13,7 +13,6 @@ const app = express()
 // use
 
 const pathRes = path.join(__dirname, '../public')
-console.log(pathRes)
 
 
 app.use(express.static(path.join(__dirname, '../public')))
@@ -51,7 +50,11 @@ const getCurs = async () => {
         return data
 
     } catch (error) {
-        console.log(error)
+        console.error(`Ошибка получения информации о курсах валют: ${error.message}`)
+        throw new Error({
+            message: `Ошибка получения информации о курсах валют: ${error.message}`,
+            status: 500
+        })
     }
 }
 
@@ -67,7 +70,11 @@ const getWeather = async (city) => {
         const data = await responce.json()
         return data
     } catch (error) {
-        console.log(error)
+        console.error(`Ошибка получения информации о погоде: ${error.message}`)
+        throw new Error({
+            message: `Ошибка получения информации о погоде: ${error.message}`,
+            status: 500
+        })
     }
 
 }
@@ -99,9 +106,9 @@ const getInfo = (region) => {
 
         
     } catch (error) {
-        console.log(error)
+        console.log(`Ошибка получения информации о дате: ${error.message}`)
         throw new Error({
-            message: 'Error',
+            message: `Ошибка получения информации о дате: ${error.message}`,
             status: 500
         })
     }
@@ -170,7 +177,6 @@ app.get('/:region', async (req, res) => {
 
 
         const currentRegion = regions.data.find(region => region.name === req.params.region)
-        console.log(currentRegion)
 
         if (!currentRegion) {
             res.status(404).json({
@@ -212,7 +218,7 @@ app.get('/:region', async (req, res) => {
         
     } catch (error) {
         res.status(500).json({
-            message: 'Error',
+            message: `Ошибка запроса данных виджета: ${error.message}`,
             status: 500
         })
     }
@@ -231,8 +237,6 @@ app.get('/time/:region', async (req, res) => {
         res.setHeader('Access-Control-Max-Age', '86400')
 
         const currentRegion = regions.data.find(region => region.name === req.params.region)
-        console.log(currentRegion)
-
         const info = getInfo(currentRegion.timeZone)
 
         res.status(200).json({
@@ -241,7 +245,7 @@ app.get('/time/:region', async (req, res) => {
 
     } catch (error) {
         res.status(500).json({
-            message: 'Error',
+            message: `Ошибка запроса данных виджета: ${error.message}`,
             status: 500
         })
     }
