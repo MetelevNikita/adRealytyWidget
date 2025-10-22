@@ -123,11 +123,13 @@ app.get('/', async (req, res) => {
         const info = getInfo('Asia/Yekaterinburg')
         const wetaher = await getWeather('ufa')
         const curs = await getCurs()
-
-
-
         const time = info.timeRegion.split(':')
-        console.log(time)
+
+
+
+        const day = info.dateRegion.split(',')[0]
+        const date = info.dateRegion.split(',')[1]
+  
 
 
         const currentIcon = (time[0] >= 6 && time[0] < 18) ? `${process.env.URL}/img/sun.png` : `${process.env.URL}/img/moon.png`
@@ -135,10 +137,12 @@ app.get('/', async (req, res) => {
         const currentBg = (time[0] >= 6 && time[0] < 18) ? `${process.env.URL}/img/light.png` : `${process.env.URL}/img/dark.png`
 
 
-        res.status(200).json({
+        return res.status(200).json({
             time: info.timeRegion,
-            date: info.dateRegion,
+            date: info.dateRegion.split(',')[1].trim(),
+            day: info.dateRegion.split(',')[0],
             wetaher: Math.floor(wetaher.main.temp),
+            feelsLike: Math.ceil(wetaher.main.feels_like),
             img: currentIcon,
             bg: currentBg,
             curs: curs.Valute.USD.Value.toFixed(2)
@@ -180,9 +184,13 @@ app.get('/:region', async (req, res) => {
         const curs = await getCurs()
 
 
+        const day = info.dateRegion.split(',')[0]
+        const date = info.dateRegion.split(',')[1]
+
+
 
         const time = info.timeRegion.split(':')
-        console.log(time)
+ 
 
 
         const currentIcon = (time[0] >= 6 && time[0] < 18) ? `${process.env.URL}/img/sun.png` : `${process.env.URL}/img/moon.png`
@@ -192,8 +200,10 @@ app.get('/:region', async (req, res) => {
 
         res.status(200).json({
             time: info.timeRegion,
-            date: info.dateRegion,
-            wetaher: Math.floor(wetaher.main.temp),
+            date: info.dateRegion.split(',')[1].trim(),
+            day: info.dateRegion.split(',')[0],
+            wetaher: Math.ceil(wetaher.main.temp),
+            feelsLike: Math.ceil(wetaher.main.feels_like),
             img: currentIcon,
             bg: currentBg,
             curs: curs.Valute.USD.Value.toFixed(2)
