@@ -52,6 +52,33 @@
       "city": "Sterlitamak",
       "lat": "56327",
       "lon": "44007"
+    },
+
+    {
+      "id": "7",
+      "name": "putilkovo",
+      "timeZone": "Europe/Moscow",
+      "city": "putilkovo",
+      "lat": "55838",
+      "lon": "37374"
+    },
+
+    {
+      "id": "8",
+      "name": "odintsovo",
+      "timeZone": "Europe/Moscow",
+      "city": "odintsovo",
+      "lat": "55678",
+      "lon": "37263"
+    },
+
+    {
+      "id": "8",
+      "name": "lyubertsy",
+      "timeZone": "Europe/Moscow",
+      "city": "lyubertsy",
+      "lat": "55679",
+      "lon": "37894"
     }
   ]
 }
