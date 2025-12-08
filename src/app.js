@@ -39,7 +39,8 @@ const getCurs = async () => {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
-            }
+            },
+            timeout: 5000
         })
 
         if (!responce.ok) {
@@ -64,8 +65,11 @@ const getWeather = async (city) => {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
-            }
+            },
+            timeout: 5000
         })
+
+
 
         const data = await responce.json()
         return data
@@ -157,7 +161,22 @@ app.get('/', async (req, res) => {
         })
         
     } catch (error) {
-        console.log(error)
+        console.log('Ошибка в обработке запроса:', error);
+        
+        if (!res.headersSent) {
+            return res.status(500).json({ 
+                error: 'Internal server error',
+                message: error.message 
+            });
+        }
+
+
+        return res.status(500).json({
+            error: {
+                message: 'Internal server error',
+                status: 500
+            }
+        })
     }
 })
 
@@ -168,12 +187,10 @@ app.get('/:region', async (req, res) => {
     try {
 
         res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+        res.setHeader('Access-Control-Allow-Methods', 'GET');
         res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization');
         res.setHeader('Access-Control-Allow-Credentials', 'true');
         res.setHeader('Access-Control-Max-Age', '86400')
-
-
 
 
         const currentRegion = regions.data.find(region => region.name === req.params.region)
@@ -193,11 +210,7 @@ app.get('/:region', async (req, res) => {
         const day = info.dateRegion.split(',')[0]
         const date = info.dateRegion.split(',')[1]
 
-
-
         const time = info.timeRegion.split(':')
- 
-
 
         const currentIcon = (time[0] >= 6 && time[0] < 18) ? `${process.env.URL}/img/sun.png` : `${process.env.URL}/img/moon.png`
 
@@ -258,9 +271,16 @@ app.get('/time/:region', async (req, res) => {
 
 const PORT = process.env.PORT || 3000
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`)
-})
 
+const startServer = () => {
+    try {
+        app.listen(PORT, () => {
+            console.log(`Сервер запущен на порту ${PORT}\n\nPID: ${process.pid}`)
+        })
+    } catch (error) {
+        console.log(`Ошибка запуска сервера: ${error.message}\n\nPID: ${process.pid}`)
+    }
+}
 
+startServer()
 
