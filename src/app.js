@@ -40,7 +40,7 @@ const getCurs = async () => {
             headers: {
               'Content-Type': 'application/json',
             },
-            timeout: 5000
+            timeout: 500
         })
 
         if (!responce.ok) {
@@ -66,7 +66,7 @@ const getWeather = async (city) => {
             headers: {
               'Content-Type': 'application/json',
             },
-            timeout: 5000
+            timeout: 500
         })
 
 
@@ -274,8 +274,14 @@ const PORT = process.env.PORT || 3000
 
 const startServer = () => {
     try {
-        app.listen(PORT, () => {
+        const server = app.listen(PORT, () => {
             console.log(`Сервер запущен на порту ${PORT}\n\nPID: ${process.pid}`)
+
+            server.keepAliveTimeout = 65000; // 65 секунд
+            server.headersTimeout = 66000; // 66 секунд
+            
+            // Увеличиваем лимиты сокетов
+            server.maxConnections = 1000;
         })
     } catch (error) {
         console.log(`Ошибка запуска сервера: ${error.message}\n\nPID: ${process.pid}`)
