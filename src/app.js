@@ -15,7 +15,6 @@ const app = express()
 
 const cashe = new NodeCache({
     stdTTL: 3600,
-    checkperiod: 60,
     useClones: false,
     maxKeys: 100,
     deleteOnExpire: true,
@@ -27,11 +26,11 @@ const cashKeys = {
     curs: 'currency',
     weather: (region) => {
         console.log('выбранный регион ', region)
-        return `weather_${region}`
+        return `weather_${region.toLocaleLowerCase().trim()}`
     },
     feels_like: (region) => {
         console.log('выбранный регион ', region)
-        return `feels_like_${region}`
+        return `feels_like_${region.toLocaleLowerCase().trim()}`
     }
 }
 
@@ -174,7 +173,7 @@ const getWeather = async (city) => {
             headers: {
               'Content-Type': 'application/json',
             },
-            timeout: 500
+            timeout: 30000
         })
 
 
