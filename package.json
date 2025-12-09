@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
+    "node-cache": "^5.1.2",
     "node-fetch": "^2.7.0"
   }
 }

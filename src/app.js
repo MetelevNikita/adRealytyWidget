@@ -4,11 +4,37 @@ const path = require('path')
 const cors = require('cors')
 const dotnev = require('dotenv')
 const fetch = require('node-fetch')
+const NodeCache = require('node-cache');
 
 
 // app
 
 const app = express()
+
+// cashe
+
+const cashe = new NodeCache({
+    stdTTL: 3600,
+    checkperiod: 60,
+    useClones: false,
+    maxKeys: 100,
+    deleteOnExpire: true,
+    checkperiod: 600
+})
+
+
+const cashKeys = {
+    curs: 'currency',
+    weather: (region) => {
+        console.log('выбранный регион ', region)
+        return `weather_${region}`
+    },
+    feels_like: (region) => {
+        console.log('выбранный регион ', region)
+        return `feels_like_${region}`
+    }
+}
+
 
 // use
 
@@ -28,19 +54,90 @@ dotnev.config({
 
 const regions = require('../regions.json')
 
-
 // 
 
 
+const startBackgroundCacheUpdater = () => {
+    console.log('Запуск фонового обновления кэша...')
+    
+    setInterval(async () => {
+        try {
+            console.log('Фоновое обновление данных...')
+            
+            // 1. Обновляем курс валют
+            try {
+                console.log('Обновление курса валют')
+                const response = await fetch(`https://www.cbr-xml-daily.ru/daily_json.js`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    timeout: 5000
+                })
+                
+                if (response.ok) {
+                    const data = await response.json()
+                    cashe.set(cashKeys.curs, data, 3600)
+                    console.log('Курс валют обновлен')
+                }
+            } catch (error) {
+                console.error('Ошибка обновления курса:', error.message)
+            }
+            
+            // 2. Обновляем погоду для всех регионов
+            for (const region of regions.data) {
+                try {
+                    console.log(`Обновление погоды для ${region.city}...`)
+                    const response = await fetch(
+                        `https://api.openweathermap.org/data/2.5/weather?q=${region.city}&units=metric&appid=${process.env.TOKEN}`,
+                        {
+                            method: 'GET',
+                            headers: { 'Content-Type': 'application/json' },
+                            timeout: 5000
+                        }
+                    )
+                    
+                    if (response.ok) {
+                        const data = await response.json()
+                        const weatherKey = cashKeys.weather(region.city)
+                        const feelsLikeKey = cashKeys.feels_like(region.city)
+                        
+                        // Сохраняем полные данные погоды
+                        cashe.set(weatherKey, data, 3600)
+                        
+                        // Можно также сохранить отдельно feels_like если нужно
+                        cashe.set(feelsLikeKey, data.main.feels_like, 3600)
+                        
+                        console.log(`Погода для ${region.city} обновлена`)
+                    }
+                } catch (error) {
+                    console.error(`Ошибка обновления погоды для ${region.city}:`, error.message)
+                }
+            }
+        } catch (error) {
+            console.error('Ошибка в фоновом обновлении:', error.message)
+        }
+    }, 60 * 60 * 1000) // Каждый час
+}
+
 
 const getCurs = async () => {
+
+    const cacheKey = cashKeys.curs;
+
+    const cashedData = cashe.get(cacheKey)
+    if (cashedData) {
+        console.log('Курс валюты из кэша')
+        return cashedData
+    }
+
+    console.log('Курс валюты из сети')
+
     try {
         const responce = await fetch(`https://www.cbr-xml-daily.ru/daily_json.js`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
             },
-            timeout: 500
+            timeout: 30000
         })
 
         if (!responce.ok) {
@@ -48,18 +145,29 @@ const getCurs = async () => {
         }
 
         const data = await responce.json()
+        cashe.set(cacheKey, data, 3600)
+        console.log(`Курс валют сохранен в кэш на 1 час`)
         return data
 
     } catch (error) {
         console.error(`Ошибка получения информации о курсах валют: ${error.message}`)
-        throw new Error({
-            message: `Ошибка получения информации о курсах валют: ${error.message}`,
-            status: 500
-        })
+        throw new Error(`Ошибка получения информации о курсе валют: ${error.message}`)
     }
 }
 
 const getWeather = async (city) => {
+
+    const casheKey = cashKeys.weather(city)
+    const cashedData = cashe.get(casheKey)
+
+    if (cashedData) {
+        console.log(`данные о погоде в городе ${city} из кэша`)
+        return cashedData
+    }
+
+    console.log(`данные о погоде в городе ${city} из сети`)
+
+
     try {
         const responce = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${process.env.TOKEN}`, {
             method: 'GET',
@@ -70,15 +178,14 @@ const getWeather = async (city) => {
         })
 
 
-
         const data = await responce.json()
+        cashe.set(casheKey, data, 3600)
+        console.log(`Погода для ${city} сохранена в кэш на 1 час`)
         return data
+
     } catch (error) {
         console.error(`Ошибка получения информации о погоде: ${error.message}`)
-        throw new Error({
-            message: `Ошибка получения информации о погоде: ${error.message}`,
-            status: 500
-        })
+        throw new Error(`Ошибка получения информации о погоде: ${error.message}`)
     }
 
 }
@@ -120,6 +227,11 @@ const getInfo = (region) => {
 
 
 
+
+// endpoint
+
+
+
 app.get('/', async (req, res) => {
     try {
 
@@ -145,7 +257,7 @@ app.get('/', async (req, res) => {
 
         const currentIcon = (time[0] >= 6 && time[0] < 18) ? `${process.env.URL}/img/sun.png` : `${process.env.URL}/img/moon.png`
 
-        const currentBg = (time[0] >= 6 && time[0] < 18) ? `${process.env.URL}/img/light.png` : `${process.env.URL}/img/dark.png`
+        const currentBg = `${process.env.URL}/img/black.png`
 
 
         return res.status(200).json({
@@ -214,7 +326,7 @@ app.get('/:region', async (req, res) => {
 
         const currentIcon = (time[0] >= 6 && time[0] < 18) ? `${process.env.URL}/img/sun.png` : `${process.env.URL}/img/moon.png`
 
-        const currentBg = (time[0] >= 6 && time[0] < 18) ? `${process.env.URL}/img/light.png` : `${process.env.URL}/img/dark.png`
+        const currentBg = `${process.env.URL}/img/black.png`
 
 
         res.status(200).json({
@@ -274,6 +386,7 @@ const PORT = process.env.PORT || 3000
 
 const startServer = () => {
     try {
+        startBackgroundCacheUpdater()
         const server = app.listen(PORT, () => {
             console.log(`Сервер запущен на порту ${PORT}\n\nPID: ${process.pid}`)
 
