@@ -323,8 +323,7 @@ app.get('/:region', async (req, res) => {
 
         const time = info.timeRegion.split(':')
 
-        const currentIcon = (time[0] >= 6 && time[0] < 18) ? `${process.env.URL}/img/sun.png` : `${process.env.URL}/img/moon.png`
-
+        const currentIcon = ''
         const currentBg = `${process.env.URL}/img/black.png`
 
 
@@ -350,30 +349,30 @@ app.get('/:region', async (req, res) => {
 
 
 
-// app.get('/time/:region', async (req, res) => {
-//     try {
+app.get('/time/:region', async (req, res) => {
+    try {
 
 
-//         res.setHeader('Access-Control-Allow-Origin', '*');
-//         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-//         res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization');
-//         res.setHeader('Access-Control-Allow-Credentials', 'true');
-//         res.setHeader('Access-Control-Max-Age', '86400')
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+        res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Max-Age', '86400')
 
-//         const currentRegion = regions.data.find(region => region.name === req.params.region)
-//         const info = getInfo(currentRegion.timeZone)
+        const currentRegion = regions.data.find(region => region.name === req.params.region)
+        const info = getInfo(currentRegion.timeZone)
 
-//         res.status(200).json({
-//             time: info.timeRegion,
-//         })
+        res.status(200).json({
+            time: info.timeRegion,
+        })
 
-//     } catch (error) {
-//         res.status(500).json({
-//             message: `Ошибка запроса данных виджета: ${error.message}`,
-//             status: 500
-//         })
-//     }
-// })
+    } catch (error) {
+        res.status(500).json({
+            message: `Ошибка запроса данных виджета: ${error.message}`,
+            status: 500
+        })
+    }
+})
 
 
 
