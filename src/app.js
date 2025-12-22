@@ -5,11 +5,13 @@ const cors = require('cors')
 const dotnev = require('dotenv')
 const fetch = require('node-fetch')
 const NodeCache = require('node-cache');
+const compression = require('compression');
 
 
 // app
 
 const app = express()
+app.disable('x-powered-by');
 
 // cashe
 
@@ -40,7 +42,14 @@ const cashKeys = {
 const pathRes = path.join(__dirname, '../public')
 
 
-app.use(express.static(path.join(__dirname, '../public')))
+app.use(compression())
+app.use(express.json({ limit: '10kb' }));
+app.use(express.static('public', {
+    maxAge: '1d',
+    setHeaders: (res, path) => {
+        res.set('Cache-Control', 'public, max-age=86400');
+    }
+}));
 
 
 // 
@@ -55,11 +64,16 @@ const regions = require('../regions.json')
 
 // 
 
+let backgroundUpdateInterval
 
 const startBackgroundCacheUpdater = () => {
     console.log('Запуск фонового обновления кэша...')
+
+    if (backgroundUpdateInterval) {
+        clearInterval(backgroundUpdateInterval)
+    }
     
-    setInterval(async () => {
+    backgroundUpdateInterval = setInterval(async () => {
         try {
             console.log('Фоновое обновление данных...')
             
@@ -146,7 +160,6 @@ const getCurs = async () => {
         const data = await responce.json()
         cashe.set(cacheKey, data, 3600)
         console.log(`Курс валют сохранен в кэш на 1 час`)
-        return data
 
     } catch (error) {
         console.error(`Ошибка получения информации о курсах валют: ${error.message}`)
@@ -180,7 +193,6 @@ const getWeather = async (city) => {
         const data = await responce.json()
         cashe.set(casheKey, data, 3600)
         console.log(`Погода для ${city} сохранена в кэш на 1 час`)
-        return data
 
     } catch (error) {
         console.error(`Ошибка получения информации о погоде: ${error.message}`)
@@ -225,10 +237,7 @@ const getInfo = (region) => {
 }
 
 
-
-
 // endpoint
-
 
 
 app.get('/', async (req, res) => {
@@ -241,21 +250,17 @@ app.get('/', async (req, res) => {
         res.setHeader('Access-Control-Max-Age', '86400')
 
 
-
         const info = getInfo('Asia/Yekaterinburg')
         const wetaher = await getWeather('ufa')
         const curs = await getCurs()
         const time = info.timeRegion.split(':')
 
 
-
         const day = info.dateRegion.split(',')[0]
         const date = info.dateRegion.split(',')[1]
   
 
-
         const currentIcon = (time[0] >= 6 && time[0] < 18) ? `${process.env.URL}/img/sun.png` : `${process.env.URL}/img/moon.png`
-
         const currentBg = `${process.env.URL}/img/black.png`
 
 
@@ -385,14 +390,8 @@ const PORT = process.env.PORT || 3000
 const startServer = () => {
     try {
         startBackgroundCacheUpdater()
-        const server = app.listen(PORT, () => {
+        app.listen(PORT, () => {
             console.log(`Сервер запущен на порту ${PORT}\n\nPID: ${process.pid}`)
-
-            server.keepAliveTimeout = 65000; // 65 секунд
-            server.headersTimeout = 66000; // 66 секунд
-            
-            // Увеличиваем лимиты сокетов
-            server.maxConnections = 1000;
         })
     } catch (error) {
         console.log(`Ошибка запуска сервера: ${error.message}\n\nPID: ${process.pid}`)
